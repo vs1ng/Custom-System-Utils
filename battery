@@ -1,0 +1,4 @@
+#!/bin/bash
+echo -e "\n Battery Level: $(upower -i /org/freedesktop/UPower/devices/battery_BAT0 | grep percentage | awk '{print $2}')\n"
+BL=$(upower -i /org/freedesktop/UPower/devices/battery_BAT0 | grep percentage | awk '{print $2}')
+notify-send "$BL" "The battery is $BL charged."
