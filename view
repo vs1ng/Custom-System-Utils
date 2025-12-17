@@ -1,0 +1,74 @@
+#!/bin/python3
+import tkinter as tk
+from tkinter import filedialog, messagebox
+from tkinter import ttk
+import csv
+import os
+
+class CSVViewerApp:
+    def __init__(self, master):
+        self.master = master
+        master.title("CSV File Viewer")
+        master.columnconfigure(0, weight=1)
+        master.rowconfigure(0, weight=1)
+        self.label = ttk.Label(master, text="Select a CSV file to display its contents:")
+        self.label.grid(row=0, column=0, padx=10, pady=10, sticky="ew")
+        self.select_button = ttk.Button(master, text="Browse and View CSV", command=self.open_file_dialog)
+        self.select_button.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
+        self.quit_button = ttk.Button(master, text="Exit", command=master.quit)
+        self.quit_button.grid(row=2, column=0, padx=10, pady=(0, 10), sticky="ew")
+
+    def open_file_dialog(self):
+        file_path = filedialog.askopenfilename(
+            defaultextension=".csv",
+            filetypes=[("CSV files", "*.csv"), ("All files", "*.*")]
+        )
+        if file_path:
+            self.display_csv(file_path)
+
+    def display_csv(self, file_path):
+        data = []
+        try:
+            with open(file_path, 'r', newline='', encoding='utf-8') as file:
+                reader = csv.reader(file)
+                header = next(reader)
+                for row in reader:
+                    data.append(row)
+
+        except FileNotFoundError:
+            messagebox.showerror("Error", f"File not found: {file_path}")
+            return
+        except Exception as e:
+            messagebox.showerror("Error", f"An error occurred while reading the file: {e}")
+            return
+
+        if not header:
+            messagebox.showwarning("Warning", "The CSV file appears to be empty.")
+            return
+
+        display_window = tk.Toplevel(self.master)
+        display_window.title(f"Viewing: {os.path.basename(file_path)}")
+        display_window.geometry("800x400")
+        display_window.columnconfigure(0, weight=1)
+        display_window.rowconfigure(0, weight=1)
+        self.tree = ttk.Treeview(display_window, columns=header, show='headings')
+        for col in header:
+            self.tree.heading(col, text=col.replace('_', ' ').title(), anchor="w")
+            self.tree.column(col, minwidth=100, width=150, stretch=True)
+        for row in data:
+            self.tree.insert('', 'end', values=row)
+        vsb = ttk.Scrollbar(display_window, orient="vertical", command=self.tree.yview)
+        hsb = ttk.Scrollbar(display_window, orient="horizontal", command=self.tree.xview)
+        self.tree.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
+        self.tree.grid(row=0, column=0, sticky='nsew')
+        vsb.grid(row=0, column=1, sticky='ns')
+        hsb.grid(row=1, column=0, sticky='ew')
+        display_window.focus_set()
+
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    style = ttk.Style()
+    style.theme_use("clam")  # Or "alt", "default", "classic", "vista", etc.
+    app = CSVViewerApp(root)
+    root.mainloop()
